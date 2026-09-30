@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitBuddy – AI fitness plan generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f5f8; --surface:#ffffff; --ink:#0f1a2b; --muted:#56647a;
+  --line:#d5dce6; --accent:#2447f5; --accent-ink:#ffffff; --mint:#d3f3e0; --err:#b3261e;
+  --font:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1320; --surface:#141d2e; --ink:#eaf0fa; --muted:#93a1b8;
+    --line:#26324a; --accent:#6f8cff; --accent-ink:#0c1320; --mint:#15392b; --err:#ff8a80;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px}
+.brand{font-weight:800;font-size:1.35rem;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.powered{color:var(--muted);font-size:.9rem}
+
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:48px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr;gap:36px}}
+
+h1{font-size:clamp(2.4rem,5.5vw,4.2rem);line-height:1.02;letter-spacing:-.035em;font-weight:800;margin:0 0 16px}
+.lede{color:var(--muted);max-width:44ch;margin:0 0 32px}
+
+form{display:grid;gap:22px}
+fieldset{border:0;padding:0;margin:0}
+legend,label.l{display:block;font-weight:600;margin-bottom:8px;padding:0}
+
+.goals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:480px){.goals{grid-template-columns:1fr}}
+.goals input{position:absolute;opacity:0;pointer-events:none}
+.goals label{display:block;padding:16px 14px;border:2px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;font-weight:600;line-height:1.25}
+.goals label small{display:block;font-weight:400;color:var(--muted);margin-top:4px}
+.goals input:checked+label{border-color:var(--accent);background:var(--mint);color:var(--ink)}
+.goals input:focus-visible+label{outline:3px solid var(--accent);outline-offset:2px}
+
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.row.two{grid-template-columns:repeat(2,1fr)}
+@media (max-width:480px){.row,.row.two{grid-template-columns:1fr 1fr}}
+input[type=number],select,textarea{
+  width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--ink);font:inherit}
+textarea{resize:vertical;min-height:76px}
+.hint{color:var(--muted);font-size:.85rem;margin-top:5px}
+
+button.go{
+  font:inherit;font-weight:700;font-size:1.05rem;padding:16px 26px;border:0;border-radius:12px;
+  background:var(--accent);color:var(--accent-ink);cursor:pointer;justify-self:start;
+  transition:transform .12s ease}
+button.go:active{transform:scale(.98)}
+button.go[disabled]{opacity:.6;cursor:progress}
+
+.out{background:var(--surface);border:1.5px solid var(--line);border-radius:20px;padding:30px;min-height:420px}
+.empty{color:var(--muted)}
+.empty h2{color:var(--ink)}
+h2{font-size:1.5rem;letter-spacing:-.02em;margin:0 0 10px}
+h3{font-size:1.1rem;margin:0 0 6px}
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:0;list-style:none}
+.summary li{background:var(--mint);color:var(--ink);padding:5px 12px;border-radius:99px;font-size:.88rem;font-weight:600}
+
+.tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin-bottom:22px}
+.tabs button{font:inherit;font-weight:600;background:none;border:0;padding:10px 16px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1.5px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.day{padding:16px 0;border-top:1px solid var(--line)}
+.day:first-child{border-top:0;padding-top:0}
+.day p,.day ul{margin:0}
+.day ul{padding-left:20px}
+.tips{padding-left:20px;margin:0}
+.tips li{margin-bottom:10px}
+.actions{display:flex;gap:10px;margin-top:24px}
+.actions button{font:inherit;padding:9px 16px;border-radius:10px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-weight:600}
+.err{color:var(--err);font-weight:600}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.note{margin-top:40px;color:var(--muted);font-size:.85rem;max-width:70ch}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important;scroll-behavior:auto!important}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Fit<span>Buddy</span></div>
+    <div class="powered">Plans written by Gemini</div>
+  </header>
+
+  <main class="grid">
+    <section aria-labelledby="title">
+      <h1 id="title">A workout plan built around you.</h1>
+      <p class="lede">Tell FitBuddy your goal and your week. It writes a training schedule and nutrition tips you can start today.</p>
+
+      <form id="form" novalidate>
+        <fieldset>
+          <legend>What's your goal?</legend>
+          <div class="goals">
+            <input type="radio" name="goal" id="g1" value="weight loss" checked>
+            <label for="g1">Lose weight<small>Burn fat, keep energy</small></label>
+            <input type="radio" name="goal" id="g2" value="muscle gain">
+            <label for="g2">Build muscle<small>Get stronger</small></label>
+            <input type="radio" name="goal" id="g3" value="general wellness">
+            <label for="g3">Feel better<small>Move more, stay healthy</small></label>
+          </div>
+        </fieldset>
+
+        <div class="row">
+          <div><label class="l" for="age">Age</label><input id="age" type="number" min="14" max="90" value="28" required></div>
+          <div><label class="l" for="weight">Weight (kg)</label><input id="weight" type="number" min="30" max="250" value="70" required></div>
+          <div><label class="l" for="height">Height (cm)</label><input id="height" type="number" min="120" max="230" value="170" required></div>
+        </div>
+
+        <div class="row two">
+          <div>
+            <label class="l" for="level">Experience</label>
+            <select id="level">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div>
+            <label class="l" for="days">Days per week</label>
+            <select id="days">
+              <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row two">
+          <div>
+            <label class="l" for="place">Where you train</label>
+            <select id="place">
+              <option value="home, no equipment">Home, no equipment</option>
+              <option value="home, basic equipment">Home, basic equipment</option>
+              <option value="gym">Gym</option>
+            </select>
+          </div>
+          <div>
+            <label class="l" for="diet">Food preference</label>
+            <select id="diet">
+              <option value="no restriction">No restriction</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="non-vegetarian">Non-vegetarian</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="l" for="notes">Injuries or notes <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <textarea id="notes" placeholder="For example: sore left knee, 30 minutes per session"></textarea>
+        </div>
+
+        <button class="go" id="submit" type="submit">Generate my plan</button>
+      </form>
+    </section>
+
+    <section class="out" id="out" aria-live="polite" aria-busy="false">
+      <div class="empty">
+        <h2>Your plan will appear here</h2>
+        <p>Fill in the form and choose Generate my plan. You'll get a weekly workout schedule and nutrition tips.</p>
+      </div>
+    </section>
+  </main>
+
+  <p class="note">FitBuddy gives general fitness information, not medical advice. Talk to a doctor before starting a new exercise or diet program, especially if you have a health condition or injury.</p>
+</div>
+
+<script>
+/* ---- Config: point this at your FastAPI server ---- */
+const API_URL = "/api/generate-plan";   // e.g. "http://127.0.0.1:8000/api/generate-plan" if served separately
+
+/* Expected request (JSON):
+   { goal, age, weight_kg, height_cm, level, days_per_week, place, diet, notes }
+   Expected response (JSON), either field may be a string or an array:
+   { "workout_plan": [...] | "text", "nutrition_tips": [...] | "text" }  */
+
+const $ = id => document.getElementById(id);
+const out = $("out"), btn = $("submit");
+let lastText = "";
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function inline(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); }
+
+/* Turn a string or array into readable blocks */
+function toBlocks(v){
+  if (Array.isArray(v)) {
+    return v.map(item => {
+      if (typeof item === "string") return { title:"", lines:[item] };
+      const title = item.day || item.title || item.name || "";
+      let body = item.exercises || item.details || item.description || item.items || [];
+      if (!Array.isArray(body)) body = [body];
+      body = body.map(b => typeof b === "string" ? b : [b.name, b.sets && (b.sets + " sets"), b.reps && (b.reps + " reps")].filter(Boolean).join(" · "));
+      return { title, lines: body };
+    });
+  }
+  const parts = String(v || "").split(/\n{2,}/).filter(Boolean);
+  return parts.map(p => {
+    const ls = p.split("\n").map(x => x.replace(/^\s*[-*•]\s*/,"").replace(/^#+\s*/,"")).filter(Boolean);
+    const first = ls[0] || "";
+    const isTitle = ls.length > 1 && /^(\*\*)?[^.!?]{1,40}:?(\*\*)?$/.test(first);
+    return isTitle ? { title: first.replace(/\*\*|:$/g,""), lines: ls.slice(1) } : { title:"", lines: ls };
+  });
+}
+function blocksHTML(blocks, asTips){
+  if (asTips) {
+    const all = blocks.flatMap(b => (b.title ? [b.title + ": " + b.lines.join(" ")] : b.lines));
+    return '<ul class="tips">' + all.map(t => "<li>" + inline(t) + "</li>").join("") + "</ul>";
+  }
+  return blocks.map(b =>
+    '<div class="day">' + (b.title ? "<h3>" + inline(b.title) + "</h3>" : "") +
+    (b.lines.length > 1 ? "<ul>" + b.lines.map(l => "<li>" + inline(l) + "</li>").join("") + "</ul>"
+                        : "<p>" + inline(b.lines[0] || "") + "</p>") + "</div>"
+  ).join("");
+}
+function plain(v){
+  return toBlocks(v).map(b => (b.title ? b.title + "\n" : "") + b.lines.map(l => "- " + l).join("\n")).join("\n\n");
+}
+
+function render(data, payload){
+  const workout = blocksHTML(toBlocks(data.workout_plan), false);
+  const tips = blocksHTML(toBlocks(data.nutrition_tips), true);
+  lastText = "FitBuddy plan – " + payload.goal + "\n\nWORKOUT\n" + plain(data.workout_plan) + "\n\nNUTRITION\n" + plain(data.nutrition_tips);
+
+  out.innerHTML =
+    "<h2>Your " + esc(payload.goal) + " plan</h2>" +
+    '<ul class="summary"><li>' + payload.days_per_week + " days a week</li><li>" + esc(payload.level) + "</li><li>" + esc(payload.place) + "</li><li>" + esc(payload.diet) + "</li></ul>" +
+    '<div class="tabs" role="tablist">' +
+      '<button role="tab" id="t1" aria-selected="true" aria-controls="p1">Workout</button>' +
+      '<button role="tab" id="t2" aria-selected="false" aria-controls="p2">Nutrition</button></div>' +
+    '<div id="p1" role="tabpanel" aria-labelledby="t1">' + workout + "</div>" +
+    '<div id="p2" role="tabpanel" aria-labelledby="t2" hidden>' + tips + "</div>" +
+    '<div class="actions"><button type="button" id="copy">Copy plan</button><button type="button" id="print">Print</button></div>';
+
+  const tabs = out.querySelectorAll("[role=tab]");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => {
+      const on = x === t;
+      x.setAttribute("aria-selected", on);
+      $(x.getAttribute("aria-controls")).hidden = !on;
+    });
+  }));
+  $("copy").onclick = async e => {
+    try { await navigator.clipboard.writeText(lastText); e.target.textContent = "Copied"; }
+    catch { e.target.textContent = "Copy failed"; }
+    setTimeout(() => e.target.textContent = "Copy plan", 1800);
+  };
+  $("print").onclick = () => window.print();
+}
+
+function showError(msg){
+  out.innerHTML = '<h2>Couldn\'t generate your plan</h2><p class="err">' + esc(msg) + "</p><p>Check your details and try again. If it keeps failing, make sure the FitBuddy server is running.</p>";
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const payload = {
+    goal: document.querySelector("input[name=goal]:checked").value,
+    age: +$("age").value,
+    weight_kg: +$("weight").value,
+    height_cm: +$("height").value,
+    level: $("level").value,
+    days_per_week: +$("days").value,
+    place: $("place").value,
+    diet: $("diet").value,
+    notes: $("notes").value.trim()
+  };
+  if (!payload.age || !payload.weight_kg || !payload.height_cm) {
+    return showError("Enter your age, weight, and height.");
+  }
+
+  btn.disabled = true; btn.textContent = "Generating…";
+  out.setAttribute("aria-busy","true");
+  out.innerHTML = '<p><span class="spin"></span>Writing your plan. This can take up to 20 seconds.</p>';
+  if (window.matchMedia("(max-width:900px)").matches) out.scrollIntoView({behavior:"smooth"});
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      let detail = "Server returned " + res.status + ".";
+      try { const j = await res.json(); if (j.detail) detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
+      throw new Error(detail);
+    }
+    const data = await res.json();
+    if (!data.workout_plan && !data.nutrition_tips) throw new Error("The server sent an empty plan.");
+    render(data, payload);
+  } catch (err) {
+    showError(err.message || "Network error.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Generate my plan";
+    out.setAttribute("aria-busy","false");
+  }
+});
+</script>
+</body>
+</html>
