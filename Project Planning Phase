@@ -1,0 +1,13 @@
+Hive2Home is a honey traceability and smart-beekeeping application that connects:
+
+Farmer → Hive → Honey Batch → QR Code → Consumer Verification → Blockchain Hash
+
+The consumer scans a QR code attached to a honey batch and can verify:
+
+Whether the batch is registered
+Farmer information
+Hive information
+Bee species
+Harvest/batch details
+Blockchain-style SHA-256 traceability hash
+Authenticity status
