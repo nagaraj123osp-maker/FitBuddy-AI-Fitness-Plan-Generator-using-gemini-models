@@ -1,0 +1,12 @@
+Farmer registration works correctly
+Hive IDs are generated uniquely
+Hive registration is linked to the correct farmer
+SHA-256 blockchain hashes are generated correctly
+QR codes contain valid batch information
+Camera QR scanning works
+Valid QR codes show authentic honey
+Unknown QR codes show an error
+Provider state remains consistent
+UI works on different mobile screen sizes
+Invalid user input is handled safely
+No crashes occur during normal usage
